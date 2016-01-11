@@ -1,0 +1,14 @@
+{
+  "name": "webchat-user-bot",
+  "version": "1.0.0",
+  "description": "webchat bot",
+  "main": "test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "webchat"
+  ],
+  "author": "doaspx",
+  "license": "ISC"
+}
