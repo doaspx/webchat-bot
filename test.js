@@ -52,10 +52,12 @@ function showQRImage(uuid) {
     //debug(QRUrl + querystring.stringify(params))
 
     var checkLoginPromise = new Promise((resolve, reject)=> {
-        var display = child_process.spawn('display');
+        var display = child_process.spawn('cmd');
         display.on('close', (code)=> {
+         //   console.log(code);
             resolve(uuid);
         });
+        console.log(QRUrl);
         var req = request(QRUrl, {qs: params}).pipe(display.stdin);
     });
 
@@ -64,10 +66,11 @@ function showQRImage(uuid) {
 }
 
 function checkLogin(uuid) {
+    console.log('check....');
     // 检查登录和跳转
     var p = new Promise((resolve, reject)=> {
         var timestamp = Date.now();
-        var checkUrl = `https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?tip=1&uuid=${uuid}&_=${timestamp}`
+        var checkUrl = `https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?tip=1&uuid=${uuid}&_=${timestamp}`;
         request(checkUrl, (error, response, body)=> {
             if (error) {
                 reject(error);
@@ -313,22 +316,22 @@ function webwxsync(obj) {
             jar: true,
         }
 
-//debug("options in webwxsync: \n" + inspect(options));
-//debug("postData in webwxsync: \n" + inspect(postData));
+        //debug("options in webwxsync: \n" + inspect(options));
+        //debug("postData in webwxsync: \n" + inspect(postData));
 
-//
-// synccheck检查是否需要webwxsync
-// webwxsync检查是否有更新
-// 继续synccheck啥的。。。我猜
-// 当promise遇上循环
-// 请在评论区教教我该怎么在循环中优雅地使用Promise。。。
+        //
+        // synccheck检查是否需要webwxsync
+        // webwxsync检查是否有更新
+        // 继续synccheck啥的。。。我猜
+        // 当promise遇上循环
+        // 请在评论区教教我该怎么在循环中优雅地使用Promise。。。
         request(options, (error, response, body)=> {
             // fs.writeFile('webwxsync.json', JSON.stringify(body));
             // 如果Ret: 0，有新消息
             //
             // update synckey
             obj.SyncKey = body.SyncKey;
-// 或者AddMsgCount 为 1
+            // 或者AddMsgCount 为 1
             if (body.AddMsgCount > 0) {
                 // FIXME:
                 // 这个设计可能有问题，Promise数组
