@@ -3,34 +3,32 @@ var debug = (text)=>console.error("[DEBUG]", text);
 var inspect = require('util').inspect;
 var request = require('request');
 
-var baseUrl = 'https://wx.qq.com'
+var baseUrl = 'https://wx.qq.com';
 
-var getUUID = new Promise((resolve, reject)=>{
-      var param = {
+var getUUID = new Promise((resolve, reject)=> {
+    var param = {
         appid: 'wx782c26e4c19acffb',
         fun: 'new',
         lang: 'en_US',
         _: Date.now()
-      }
+    }
 
-      var uri = '/jslogin';
+    var uri = '/jslogin';
 
-//debug(uri);
+    var options = {
+        uri: uri,
+        baseUrl: 'https://login.weixin.qq.com',
+        method: 'GET',
+        qs: param
+    };
 
-var options = {
-  uri: uri,
-  baseUrl: 'https://login.weixin.qq.com',
-  method: 'GET',
-  qs: param,
-};
-
-var req = request(options, (error, response, body)=>{
-      if (error) {
-  //debug(error);
-  reject(error);
-}
-resolve(body);
-});
+    var req = request(options, (error, response, body)=> {
+        if (error) {
+            //debug(error);
+            reject(error);
+        }
+        resolve(body);
+    });
 });
 
 function checkAndParseUUID(text) {
