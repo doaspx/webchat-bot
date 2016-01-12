@@ -1,6 +1,6 @@
 {
   "name": "webchat-user-bot",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "webchat bot",
   "main": "test.js",
   "scripts": {
@@ -10,5 +10,17 @@
     "webchat"
   ],
   "author": "doaspx",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "request": "^2.67.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/doaspx/webchat-bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/doaspx/webchat-bot/issues"
+  },
+  "homepage": "https://github.com/doaspx/webchat-bot#readme"
 }
