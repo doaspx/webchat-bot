@@ -1,7 +1,3 @@
-// var https = require('https');
-// var url = require('url');
-// var querystring = require('querystring');
-//var fs = require('fs');
 var child_process = require('child_process');
 var debug = (text)=>console.error("[DEBUG]", text);
 var inspect = require('util').inspect;
@@ -51,23 +47,23 @@ function handleError(e) {
 }
 
 function showQRImage(uuid) {
-  console.log("请扫描二维码并确认登录，关闭二维码窗口继续...");
-  var QRUrl = 'https://login.weixin.qq.com/qrcode/' + uuid + '?';
-  params = {
-    t: 'webwx',
-    '_': Date.now()
-  }
-  //debug(QRUrl + querystring.stringify(params))
+    console.log("请扫描二维码并确认登录，关闭二维码窗口继续...");
+    var QRUrl = 'https://login.weixin.qq.com/qrcode/' + uuid + '?';
+    params = {
+        t: 'webwx',
+        '_': Date.now()
+    }
+    //debug(QRUrl + querystring.stringify(params))
 
-  var checkLoginPromise = new Promise((resolve, reject)=> {
+    var checkLoginPromise = new Promise((resolve, reject)=> {
         var display = child_process.spawn('display');
-  display.on('close', (code)=>{
-    resolve(uuid);
-});
-var req = request(QRUrl, {qs: params}).pipe(display.stdin);
-});
+        display.on('close', (code)=> {
+            resolve(uuid);
+        });
+        var req = request(QRUrl, {qs: params}).pipe(display.stdin);
+    });
 
-return checkLoginPromise;
+    return checkLoginPromise;
 // 登录
 }
 
@@ -394,33 +390,33 @@ function robot(obj) {
 
 // FIXME:回复逻辑分离到其他文件
 function reply(content) {
-  // 修正群消息
-  content = content.replace(/^[^:]+:<br\/>/m, "");
-  //return Promise.resolve(content);
-  // 网络版的
-  return new Promise((resolve, reject)=> {
+    // 修正群消息
+    content = content.replace(/^[^:]+:<br\/>/m, "");
+    //return Promise.resolve(content);
+    // 网络版的
+    return new Promise((resolve, reject)=> {
         var url = `http://apis.baidu.com/turing/turing/turing`
-      request.get(
-          url,
-          {
-            headers: {
-              'apikey': '6053e172b7994b684aadfd4ae0841510',
+        request.get(
+            url,
+            {
+                headers: {
+                    'apikey': '6053e172b7994b684aadfd4ae0841510',
+                },
+                qs: {
+                    key: '879a6cb3afb84dbf4fc84a1df2ab7319',
+                    info: content,
+                    userid: 'eb2edb736',
+                },
+                json: true,
             },
-            qs: {
-              key: '879a6cb3afb84dbf4fc84a1df2ab7319',
-              info: content,
-              userid: 'eb2edb736',
-            },
-            json: true,
-          },
-          (error, response, body)=>{
-        if (error) {
-    reject(error);
-  }
-  //debug("in turing machine: " + inspect(body))
-  resolve(body.text);
-});
-});
+            (error, response, body)=> {
+                if (error) {
+                    reject(error);
+                }
+                //debug("in turing machine: " + inspect(body))
+                resolve(body.text);
+            });
+    });
 }
 
 getUUID.
