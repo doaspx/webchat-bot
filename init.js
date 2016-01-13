@@ -45,7 +45,7 @@ function handleError(e) {
 }
 
 function showQRImage(uuid) {
-    console.log("ÇëÉ¨Ãè¶şÎ¬Âë²¢È·ÈÏµÇÂ¼£¬¹Ø±Õ¶şÎ¬Âë´°¿Ú¼ÌĞø...");
+    console.log("è¯·æ‰«æäºŒç»´ç å¹¶ç¡®è®¤ç™»å½•ï¼Œå…³é—­äºŒç»´ç çª—å£ç»§ç»­...");
     var QRUrl = 'https://login.weixin.qq.com/qrcode/' + uuid + '?';
     params = {
         t: 'webwx',
@@ -70,23 +70,23 @@ function showQRImage(uuid) {
         });
     });
     return checkLoginPromise;
-// µÇÂ¼
+// ç™»å½•
 }
 
 function checkScan(uuid) {
 
-    // ¼ì²éµÇÂ¼ºÍÌø×ª
+    // æ£€æŸ¥ç™»å½•å’Œè·³è½¬
     var p = new Promise((resolve, reject)=> {
         var timestamp = Date.now();
         var checkUrl = `https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&tip=1&uuid=${uuid}&_=${timestamp}&r=-964945900`;
         request(checkUrl, (error, response, body)=> {
             if (error) return reject(error);
             if (/window\.code=201/.test(body)) {
-                console.log("É¨Ãè³É¹¦...");
+                console.log("æ‰«ææˆåŠŸ...");
                 resolve(uuid);
             } else {
-                console.log("É¨Ãè´íÎó£¬ÍË³ö³ÌĞò...")
-                reject('É¨Ãè´íÎó£¬ÍË³ö³ÌĞò');
+                console.log("æ‰«æé”™è¯¯ï¼Œé€€å‡ºç¨‹åº...")
+                reject('æ‰«æé”™è¯¯ï¼Œé€€å‡ºç¨‹åº');
             }
         });
     });
@@ -94,18 +94,18 @@ function checkScan(uuid) {
 }
 
 function checkLogin(uuid) {
-    // ¼ì²éµÇÂ¼ºÍÌø×ª
+    // æ£€æŸ¥ç™»å½•å’Œè·³è½¬
     var p = new Promise((resolve, reject)=> {
         var timestamp = Date.now();
         var checkUrl = `https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&tip=0&uuid=${uuid}&_=${timestamp}&r=-964945900`;
         request(checkUrl, (error, response, body)=> {
             if (error) return reject(error);
             if (/window\.code=200/.test(body)) {
-                console.log("µÇÂ¼Î¢ĞÅ...");
+                console.log("ç™»å½•å¾®ä¿¡...");
                 resolve(body);
             } else {
                 console.log(body)
-                reject('µÇÂ¼´íÎó£¬ÍË³ö³ÌĞò');
+                reject('ç™»å½•é”™è¯¯ï¼Œé€€å‡ºç¨‹åº');
             }
         });
     });
@@ -115,7 +115,7 @@ function checkLogin(uuid) {
 function parseRedirectUrl(text) {
     var result = /window\.redirect_uri="([^"]+)";/.exec(text);
     if (!result) {
-        console.log("µÇÂ¼Ê§°Ü£¬ÍË³ö³ÌĞò");
+        console.log("ç™»å½•å¤±è´¥ï¼Œé€€å‡ºç¨‹åº");
         process.exit(1);
     }
     var p = new Promise((resolve, reject)=> {
@@ -159,7 +159,7 @@ function webwxinit(text) {
     var wxuin = wxuin.exec(text);
     var pass_ticket = pass_ticket.exec(text);
 
-    console.log('³õÊ¼»¯...');
+    console.log('åˆå§‹åŒ–...');
     var returnVal = {
         BaseRequest: {
             Skey: skey[1],
@@ -195,7 +195,7 @@ function webwxinit(text) {
 }
 
 function getContact(obj) {
-    console.log("³õÊ¼»¯³É¹¦£¬»ñÈ¡ÁªÏµÈË...")
+    console.log("åˆå§‹åŒ–æˆåŠŸï¼Œè·å–è”ç³»äºº...")
     var p = new Promise((resolve, reject)=> {
         var skey = obj.BaseRequest.Skey;
         var pass_ticket = obj.pass_ticket;
@@ -209,17 +209,18 @@ function getContact(obj) {
             json: true,
             jar: true
         }
-        debug("getContact contactUrl: \n" + inspect(options));
         request(options, (error, response, body)=> {
             fs.writeFile('contact.json', JSON.stringify(body));
             var ml = body.MemberList;
             obj.ml = ml;
-            obj.toUser = ml.filter(m=>(m.NickName == "ÆªÆªÍ·Ìõ"))[0]['UserName'];
+            obj.toUser = ml.filter(m=>(m.NickName == "ç¯‡ç¯‡å¤´æ¡"))[0]['UserName'];
+            console.log('åˆå§‹å‡†å¤‡å®Œæˆ...');
             resolve(obj);
         });
     })
     return p;
 }
+
 
 function init(){
    return getUUID.
@@ -233,5 +234,14 @@ function init(){
         catch(console.error);
 }
 
-//var ttt = init()
-export  {init};
+
+
+module.exports = {
+    checkAndParseUUID: checkAndParseUUID,
+    showQRImage: showQRImage,
+    checkScan: checkScan,
+    checkLogin: checkLogin,
+    parseRedirectUrl: parseRedirectUrl,
+    webwxinit: webwxinit,
+    getContact: getContact
+}
