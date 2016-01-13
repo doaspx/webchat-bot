@@ -228,9 +228,9 @@ function reply(content) {
                 qs: {
                     key: '879a6cb3afb84dbf4fc84a1df2ab7319',
                     info: content,
-                    userid: 'eb2edb736',
+                    userid: 'eb2edb736'
                 },
-                json: true,
+                json: true
             },
             (error, response, body)=> {
                 if (error) {
