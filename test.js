@@ -33,7 +33,6 @@ var getUUID = new Promise((resolve, reject)=> {
 
 function checkAndParseUUID(text) {
     var result = /window.QRLogin.code = (\d+); window.QRLogin.uuid = "([^"]+)";/.exec(text);
-    //debug("checkAndParseUUID");
     if (result[1] != '200') {
         return false;
     }
@@ -79,7 +78,6 @@ function checkScan(uuid) {
     var p = new Promise((resolve, reject)=> {
         var timestamp = Date.now();
         var checkUrl = `https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&tip=1&uuid=${uuid}&_=${timestamp}&r=-964945900`;
-        console.log(checkUrl);
         request(checkUrl, (error, response, body)=> {
             if (error) return reject(error);
             if (/window\.code=201/.test(body)) {
@@ -95,13 +93,10 @@ function checkScan(uuid) {
 }
 
 function checkLogin(uuid) {
-
-    console.log('check....');
     // 检查登录和跳转
     var p = new Promise((resolve, reject)=> {
         var timestamp = Date.now();
         var checkUrl = `https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&tip=0&uuid=${uuid}&_=${timestamp}&r=-964945900`;
-        console.log(checkUrl);
         request(checkUrl, (error, response, body)=> {
             if (error) return reject(error);
             if (/window\.code=200/.test(body)) {
@@ -109,7 +104,6 @@ function checkLogin(uuid) {
                 resolve(body);
             } else {
                 console.log(body)
-                console.log("登录错误，退出程序...")
                 reject('登录错误，退出程序');
             }
         });
@@ -118,12 +112,13 @@ function checkLogin(uuid) {
 }
 
 function parseRedirectUrl(text) {
+    console.log(text);
     var result = /window\.redirect_uri="([^"]+)";/.exec(text);
-    //debug("parse redirect_uri: " + result[1]);
     if (!result) {
         console.log("登录失败，退出程序")
         process.exit(1)
     }
+    console.log('跳转...');
     return result[1]
 }
 
@@ -133,7 +128,7 @@ function login(redirectUrl) {
         request.get({
             url: redirectUrl,
             jar: true,
-            followRedirect: false,
+            followRedirect: false
         }, (error, response, body)=> {
             if (error) {
                 reject(error);
@@ -146,30 +141,26 @@ function login(redirectUrl) {
 }
 
 function getbaseRequest(text) {
-    ////debug("getbaseRequest： " + text)
     var skey = new RegExp('<skey>([^<]+)</skey>');
     var wxsid = new RegExp('<wxsid>([^<]+)</wxsid>');
     var wxuin = new RegExp('<wxuin>([^<]+)</wxuin>');
     var pass_ticket = new RegExp('<pass_ticket>([^<]+)</pass_ticket>');
-    // dirty hack
+
     var skey = skey.exec(text);
     var wxsid = wxsid.exec(text);
     var wxuin = wxuin.exec(text);
     var pass_ticket = pass_ticket.exec(text);
-    // if (!(skey && wxsid && wxuin && pass_ticket)) {
-    //   return false;
-    // }
 
+    console.log('获取票据信息...');
     var returnVal = {
         BaseRequest: {
             Skey: skey[1],
             Sid: wxsid[1],
             Uin: wxuin[1],
-            DeviceID: 'e987710405869831'
+            DeviceID: 'e162372016115114'
         },
         pass_ticket: pass_ticket[1]
     }
-    //debug("returnVal: \n" + inspect(returnVal))
 
     return returnVal;
 }
