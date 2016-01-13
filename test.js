@@ -174,7 +174,7 @@ function webwxsync(obj) {
                         if (o.FromUserName.startsWith("@@") && !o.Content.includes("@老猫")) {
                             // 群消息且at我的群昵称
                             continue;
-                        }
+                        }//http://www.xiaodoubi.com/simsimiapi.php?msg=
 
                         // 有意思的东西哈哈
                         o.Content = o.Content.replace('@老猫', '喂, ');
