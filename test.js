@@ -171,13 +171,13 @@ function webwxsync(obj) {
                             if (obj.ml[i]['UserName'] == o.FromUserName)
                                 console.log('[' + obj.ml[i]['NickName'] + ' 说]', o.Content);
                         }
-                        if (o.FromUserName.startsWith("@@") && !o.Content.includes("@小寒粉丝团")) {
+                        if (o.FromUserName.startsWith("@@") && !o.Content.includes("@老猫")) {
                             // 群消息且at我的群昵称
                             continue;
                         }
 
                         // 有意思的东西哈哈
-                        o.Content = o.Content.replace('@小寒粉丝团团员丙', '喂, ');
+                        o.Content = o.Content.replace('@老猫', '喂, ');
 
                         var username = o.FromUserName;  // 闭包,防止串号，血泪教训
                         var replyPromise = reply(o.Content);
@@ -186,7 +186,7 @@ function webwxsync(obj) {
                             // debug("in ps reps promise:" + inspect(rep))
                             obj.MsgToUserAndSend.push({
                                 User: username,
-                                Msg: "[WeChatBot]: " + rep,
+                                Msg: "[WeChatBot]: " + rep
                             });
                         });
                         ps.push(replyPromise);
@@ -243,7 +243,6 @@ function reply(content) {
 }
 
 var init = require('./init');
-
 getUUID.
     then(init.checkAndParseUUID).
     then(init.showQRImage).
