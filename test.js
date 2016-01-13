@@ -147,7 +147,7 @@ function login(redirectUrl) {
     return p;
 }
 
-function getbaseRequest(text) {
+function webwxinit(text) {
     var skey = new RegExp('<skey>([^<]+)</skey>');
     var wxsid = new RegExp('<wxsid>([^<]+)</wxsid>');
     var wxuin = new RegExp('<wxuin>([^<]+)</wxuin>');
@@ -158,7 +158,7 @@ function getbaseRequest(text) {
     var wxuin = wxuin.exec(text);
     var pass_ticket = pass_ticket.exec(text);
 
-    console.log('获取票据信息...');
+    console.log('初始化...');
     var returnVal = {
         BaseRequest: {
             Skey: skey[1],
@@ -166,42 +166,28 @@ function getbaseRequest(text) {
             Uin: wxuin[1],
             DeviceID: 'e162372016115114'
         },
-        pass_ticket: pass_ticket[1]
+        pass_ticket: pass_ticket[1],
+        MsgToUserAndSend: []
     }
 
-    return returnVal;
-}
-
-function webwxinit(obj) {
-    console.log("登录成功，初始化");
-    // FIXME: 初始化的时候初始化用户名和发送？作为全局好像也行
-    obj.MsgToUserAndSend = [];
     var p = new Promise((resolve, reject)=> {
-        //debug("in webwxinit obj:\n" + inspect(obj));
-        var postData = {BaseRequest: obj.BaseRequest};
-        //debug("in webwxinit postData: " + postData);
+        var postData = {BaseRequest: returnVal.BaseRequest};
         var timestamp = Date.now();
         var options = {
             baseUrl: 'https://wx.qq.com',
-            uri: `/cgi-bin/mmwebwx-bin/webwxinit?lang=en_US&pass_ticket=${obj.pass_ticket}`,
+            uri: `/cgi-bin/mmwebwx-bin/webwxinit?lang=en_US&pass_ticket=${returnVal.pass_ticket}`,
             method: 'POST',
             body: postData,
             json: true,
-            headers: {
-                'Content-Type': 'application/json;charset=utf-8',
-            },
+            headers: { 'Content-Type': 'application/json;charset=utf-8' },
             jar: true
         }
         var req = request(options, (error, response, body) => {
-            if (error) {
-                reject(error);
-            }
-            //debug("In webwxinit body: " + inspect(body));
-            // fs.writeFile('init.json', JSON.stringify(body));
-            obj.username = body['User']['UserName'];
-            obj.SyncKey = body['SyncKey'];
-            //debug("My username: " + obj.username)
-            resolve(obj);
+            if (error) return reject(error);
+
+            returnVal.username = body['User']['UserName'];
+            returnVal.SyncKey = body['SyncKey'];
+            resolve(returnVal);
         })
     });
     return p;
@@ -221,11 +207,11 @@ function getContact(obj) {
             uri: `/cgi-bin/mmwebwx-bin/webwxgetcontact?lang=en_US&pass_ticket=${pass_ticket}&skey=${skey}&seq=0&r=${timestamp}`,
             method: 'GET',
             json: true,
-            jar: true,
+            jar: true
         }
         //debug("getContact contactUrl: \n" + inspect(options));
         request(options, (error, response, body)=> {
-            // fs.writeFile('contact.json', JSON.stringify(body));
+             fs.writeFile('contact.json', JSON.stringify(body));
             var ml = body.MemberList;
             obj.ml = ml;
         //obj.toUser = ml.filter(m=>(m.NickName == "核心活动都是玩玩玩吃吃吃的北邮GC"))[0]['UserName'];
@@ -449,7 +435,6 @@ getUUID.
     then(checkScan).
     then(checkLogin).
     then(parseRedirectUrl).
-    then(getbaseRequest).
     then(webwxinit).
     then(getContact).
   //then(webwxstatusnotify).
