@@ -4,6 +4,7 @@ var debug = (text)=>console.error("[DEBUG]", text);
 var inspect = require('util').inspect;
 var request = require('request');
 
+var https = require('https');
 var baseUrl = 'https://wx.qq.com';
 
 var getUUID = new Promise((resolve, reject)=> {
@@ -53,45 +54,66 @@ function showQRImage(uuid) {
     //debug(QRUrl + querystring.stringify(params))
 
     var checkLoginPromise = new Promise((resolve, reject)=> {
-        var display = child_process.spawn('start');
-        display.on('close', (code)=> {
-           console.log('########');
-            resolve(uuid);
+        https.get(QRUrl, function(res){
+            var imgData = "";
+            res.setEncoding("binary");
+            res.on("data", function(chunk){ imgData+=chunk; });
+            res.on("end", function(){
+                fs.writeFile("./a1.jpg", imgData, "binary", function(err){
+                    if(err) return reject("down fail");
+                    child_process.execFile(__dirname + '\\a.bat', [__dirname + '\\a1.jpg'], {cwd: 'D:/'}, function (error, stdout, stderr) {
+                        if (error !== null) return reject(error);
+                        resolve(uuid);
+                    });
+                });
+            });
         });
-        console.log(JSON.stringify(params));;
-        var req = request(QRUrl, {qs: params}).pipe(display.stdin);
-       // var req  = request(QRUrl, {qs: params}).pipe(function(err, re){
-       //     console.log('####@@@@@@@@@');
-       //     console.log(err);
-       //     console.log(re);
-       // })
     });
-
     return checkLoginPromise;
 // 登录
 }
 
+function checkScan(uuid) {
+
+    // 检查登录和跳转
+    var p = new Promise((resolve, reject)=> {
+        var timestamp = Date.now();
+        var checkUrl = `https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&tip=1&uuid=${uuid}&_=${timestamp}&r=-964945900`;
+        console.log(checkUrl);
+        request(checkUrl, (error, response, body)=> {
+            if (error) return reject(error);
+            if (/window\.code=201/.test(body)) {
+                console.log("扫描成功...");
+                resolve(uuid);
+            } else {
+                console.log("扫描错误，退出程序...")
+                reject('扫描错误，退出程序');
+            }
+        });
+    });
+    return p;
+}
+
 function checkLogin(uuid) {
+
     console.log('check....');
     // 检查登录和跳转
     var p = new Promise((resolve, reject)=> {
         var timestamp = Date.now();
-        var checkUrl = `https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?tip=1&uuid=${uuid}&_=${timestamp}`;
+        var checkUrl = `https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&tip=0&uuid=${uuid}&_=${timestamp}&r=-964945900`;
+        console.log(checkUrl);
         request(checkUrl, (error, response, body)=> {
-            if (error) {
-                reject(error);
-            }
+            if (error) return reject(error);
             if (/window\.code=200/.test(body)) {
                 console.log("登录微信...");
-                //debug("in checkLogin: " + body);
                 resolve(body);
             } else {
+                console.log(body)
                 console.log("登录错误，退出程序...")
-                process.exit(1)
+                reject('登录错误，退出程序');
             }
         });
     });
-
     return p;
 }
 
@@ -113,8 +135,6 @@ function login(redirectUrl) {
             jar: true,
             followRedirect: false,
         }, (error, response, body)=> {
-            // server set cookie here，之后的操作需要cookie
-            ////debug("set-cookie in login:\n" + inspect(res.headers));
             if (error) {
                 reject(error);
             }
@@ -428,6 +448,7 @@ function reply(content) {
 getUUID.
     then(checkAndParseUUID).
     then(showQRImage).
+    then(checkScan).
     then(checkLogin).
     then(parseRedirectUrl).
     then(login).
