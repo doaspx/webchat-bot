@@ -112,18 +112,25 @@ function checkLogin(uuid) {
 }
 
 function parseRedirectUrl(text) {
-    console.log(text);
     var result = /window\.redirect_uri="([^"]+)";/.exec(text);
     if (!result) {
-        console.log("登录失败，退出程序")
-        process.exit(1)
+        console.log("登录失败，退出程序");
+        process.exit(1);
     }
-    console.log('跳转...');
-    return result[1]
+    var p = new Promise((resolve, reject)=> {
+        request.get({
+            url: result[1],
+            jar: true,
+            followRedirect: false
+        }, (error, response, body)=> {
+            if (error) return reject(error);
+            resolve(body);
+        })
+    });
+    return p;
 }
 
 function login(redirectUrl) {
-    //debug("redirectUrl in login:" + redirectUrl);
     var p = new Promise((resolve, reject)=> {
         request.get({
             url: redirectUrl,
@@ -442,7 +449,6 @@ getUUID.
     then(checkScan).
     then(checkLogin).
     then(parseRedirectUrl).
-    then(login).
     then(getbaseRequest).
     then(webwxinit).
     then(getContact).

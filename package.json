@@ -1,6 +1,6 @@
 {
   "name": "webchat-user-bot",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "webchat bot",
   "main": "test.js",
   "scripts": {
