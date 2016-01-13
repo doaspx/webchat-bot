@@ -1,4 +1,5 @@
 var child_process = require('child_process');
+var fs = require('fs');
 var debug = (text)=>console.error("[DEBUG]", text);
 var inspect = require('util').inspect;
 var request = require('request');
@@ -52,13 +53,18 @@ function showQRImage(uuid) {
     //debug(QRUrl + querystring.stringify(params))
 
     var checkLoginPromise = new Promise((resolve, reject)=> {
-        var display = child_process.spawn('cmd');
+        var display = child_process.spawn('start');
         display.on('close', (code)=> {
-         //   console.log(code);
+           console.log('########');
             resolve(uuid);
         });
-        console.log(QRUrl);
+        console.log(JSON.stringify(params));;
         var req = request(QRUrl, {qs: params}).pipe(display.stdin);
+       // var req  = request(QRUrl, {qs: params}).pipe(function(err, re){
+       //     console.log('####@@@@@@@@@');
+       //     console.log(err);
+       //     console.log(re);
+       // })
     });
 
     return checkLoginPromise;
@@ -141,7 +147,7 @@ function getbaseRequest(text) {
             Uin: wxuin[1],
             DeviceID: 'e987710405869831'
         },
-        pass_ticket: pass_ticket[1],
+        pass_ticket: pass_ticket[1]
     }
     //debug("returnVal: \n" + inspect(returnVal))
 
@@ -166,17 +172,17 @@ function webwxinit(obj) {
             headers: {
                 'Content-Type': 'application/json;charset=utf-8',
             },
-            jar: true,
+            jar: true
         }
         var req = request(options, (error, response, body) => {
             if (error) {
                 reject(error);
             }
-//debug("In webwxinit body: " + inspect(body));
-// fs.writeFile('init.json', JSON.stringify(body));
+            //debug("In webwxinit body: " + inspect(body));
+            // fs.writeFile('init.json', JSON.stringify(body));
             obj.username = body['User']['UserName'];
             obj.SyncKey = body['SyncKey'];
-//debug("My username: " + obj.username)
+            //debug("My username: " + obj.username)
             resolve(obj);
         })
     });
@@ -199,12 +205,12 @@ function getContact(obj) {
             json: true,
             jar: true,
         }
-//debug("getContact contactUrl: \n" + inspect(options));
+        //debug("getContact contactUrl: \n" + inspect(options));
         request(options, (error, response, body)=> {
             // fs.writeFile('contact.json', JSON.stringify(body));
             var ml = body.MemberList;
             obj.ml = ml;
-//obj.toUser = ml.filter(m=>(m.NickName == "核心活动都是玩玩玩吃吃吃的北邮GC"))[0]['UserName'];
+        //obj.toUser = ml.filter(m=>(m.NickName == "核心活动都是玩玩玩吃吃吃的北邮GC"))[0]['UserName'];
             resolve(obj);
         });
     })
