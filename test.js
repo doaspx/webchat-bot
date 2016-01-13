@@ -197,7 +197,6 @@ function webwxinit(text) {
 function getContact(obj) {
     console.log("初始化成功，获取联系人...")
     var p = new Promise((resolve, reject)=> {
-        //debug('in getContact: \n' + inspect(obj));
         var skey = obj.BaseRequest.Skey;
         var pass_ticket = obj.pass_ticket;
         // var jsonFile = fs.createWriteStream('contact.json');
@@ -205,16 +204,17 @@ function getContact(obj) {
         var options = {
             baseUrl: 'https://wx.qq.com',
             uri: `/cgi-bin/mmwebwx-bin/webwxgetcontact?lang=en_US&pass_ticket=${pass_ticket}&skey=${skey}&seq=0&r=${timestamp}`,
+           // uri: `/cgi-bin/mmwebwx-bin/webwxgetcontact?skey=${skey}&seq=0&r=${timestamp}`,
             method: 'GET',
             json: true,
             jar: true
         }
-        //debug("getContact contactUrl: \n" + inspect(options));
+        debug("getContact contactUrl: \n" + inspect(options));
         request(options, (error, response, body)=> {
              fs.writeFile('contact.json', JSON.stringify(body));
             var ml = body.MemberList;
             obj.ml = ml;
-        //obj.toUser = ml.filter(m=>(m.NickName == "核心活动都是玩玩玩吃吃吃的北邮GC"))[0]['UserName'];
+            obj.toUser = ml.filter(m=>(m.NickName == "篇篇头条"))[0]['UserName'];
             resolve(obj);
         });
     })
@@ -323,7 +323,7 @@ function webwxsync(obj) {
             method: 'POST',
             body: postData,
             json: true,
-            jar: true,
+            jar: true
         }
 
         //debug("options in webwxsync: \n" + inspect(options));
