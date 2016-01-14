@@ -63,7 +63,6 @@ function checkScan(uuid) {
                 console.log("扫描成功...");
                 resolve(uuid);
             } else {
-                console.log("扫描错误，退出程序...")
                 reject('扫描错误，退出程序');
             }
         });
@@ -188,15 +187,17 @@ function getContact(obj) {
             jar: true
         }
         request(options, (error, response, body)=> {
-           // fs.writeFile('contact.json', JSON.stringify(body));
+           // fs.writeFile('contactInfo.json', JSON.stringify(body));
             var ml = body.MemberList;
             obj.ml = ml;
             //var v = _.filter(ml, {'NickName':'BJ NodeJS Club'});
             var nicklist = _.pluck(ml, 'NickName');
-            debug('获取联系人：'+ nicklist);
-            nicklist  = _.filter(ml, {'NickName': 'Monster'})
-            debug(nicklist)
+            fs.writeFile('contact.json', nicklist);
+           // debug('获取联系人：'+ nicklist);
+            nicklist  = _.filter(ml, {'NickName': '什么是屌丝？屌丝就是鸡巴毛'});
+            obj.target = nicklist[0];
             console.log('初始准备完成...');
+            console.log('检测消息...');
             resolve(obj);
         });
     })

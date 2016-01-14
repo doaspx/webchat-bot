@@ -1,6 +1,8 @@
 /**
  * Created by zhanghongtao on 2016/1/14.
  */
+
+    var _ = require('lodash');
 var util = {
 
     getDeviceID : function () {
@@ -32,7 +34,15 @@ var util = {
         var cmStr = $("[ng-repeat='chatContact in chatList track by chatContact.UserName'] .active").attr("data-cm");
         var json = JSON.parse(cmStr);
         return json != null && json.username != null ? json.username : "";
-    } //
+    }, //
+    filterMsgList: function(list){
+        return _.filter(list, function(item){ return item.MsgType == 1});
+    },
+    findNickName: function(list, userName){
+        var fil = _.filter(list, {'UserName': userName});
+        if(fil.length > 0) return _.result(fil[0],'NickName');
+        else return 'Ä³ÈË';
+    }
 };
 
 module.exports = util;

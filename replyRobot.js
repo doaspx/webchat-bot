@@ -4,9 +4,9 @@
 var request = require('request');
 
 var debug = (text)=>console.error("[DEBUG]", text);
-// ÎÒÕý×¼±¸ÉêÇë´ð±ç
+// æˆ‘æ­£å‡†å¤‡ç”³è¯·ç­”è¾©
 function thesis(content) {
-    return Promise.resolve("ÎÒºÜÃ¦¡£¡£¡£");
+    return Promise.resolve("æˆ‘å¾ˆå¿™ã€‚ã€‚ã€‚");
 }
 
 function echo(content) {
@@ -15,6 +15,7 @@ function echo(content) {
 
 function turingRobot(content) {
     content = content.replace(/^[^:]+:<br\/>/m, "");
+    content = 'ä½ åƒé¥­äº†ä¹ˆï¼Ÿ';
     return new Promise((resolve, reject)=> {
         var url = `http://apis.baidu.com/turing/turing/turing`;
         request.get(url,
@@ -28,8 +29,8 @@ function turingRobot(content) {
                 json: true
             }, (error, response, body)=> {
                 if (error)  return reject(error);
-                debug('in turingRobot body:' + body);
-                resolve('½ñÌì¿Õ²Ö£¡£¡£¡');
+                if(body.code == 40004) return resolve(body.text);
+                resolve(body.text);
             });
     });
 }

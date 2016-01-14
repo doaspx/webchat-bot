@@ -34,6 +34,7 @@ var getUUID = new Promise((resolve, reject)=> {
 var _ = require('lodash');
 
 const botTitle = '[老猫机器人]：';
+var utl = require('./util');
 
 function handleError(e) {
     console.log(e);
@@ -45,24 +46,20 @@ function botSpeak(obj) {
         //debug('obj in botSpeak:\n' + inspect(obj));
         var BaseRequest = obj.BaseRequest;
         var pass_ticket = obj.pass_ticket;
-        var timestamp = Date.now();
-
-        var random = Math.floor(Math.random() * 1000);
         while (obj.MsgToUserAndSend.length > 0) {
-            random += 3;  // Strange hack，这个数应该是时间戳相同的消息先后编号
             // FIXME: 先pop的应该是后收到的？不一定，可能需要在上一步检查返回消息CreateTime，但短暂时间间隔保证顺序也许是不必要的。
             var msgBundle = obj.MsgToUserAndSend.pop();
             var postData = {
                 BaseRequest: obj.BaseRequest,
                 Msg: {
-                    "Type": 1,
+                    "ClientMsgId": utl.Now(),//`${timestamp}0${random}`},
                     "Content": botTitle + msgBundle.Msg,
                     "FromUserName": obj.username,
+                    "LocalID": utl.Now(),//`${timestamp}0${random}`,
                     "ToUserName": msgBundle.User,
-                    "LocalID": `${timestamp}0${random}`,
-                    "ClientMsgId": `${timestamp}0${random}`}
+                    "Type": 1
+                }
             };
-debug('botSpeak body:' + inspect(postData));
             var options = {
                 baseUrl: 'https://wx.qq.com',
                 uri: `/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=en_US&pass_ticket=${pass_ticket}`,
@@ -72,8 +69,8 @@ debug('botSpeak body:' + inspect(postData));
                 body: postData
             };
             request(options, (error, response, body)=>{
-                //console.log(botTitle, msgBundle.Msg);
-                 debug("in botSpeak ret: " + inspect(body));
+                  console.log(botTitle, msgBundle.Msg);
+                 //debug("in botSpeak ret: " + inspect(body));
             })
         }
         resolve(obj);
@@ -107,14 +104,9 @@ function synccheck(obj) {
             timeout: 60000
         }
 
-        console.log('检测是否有新的消息...');
         request(options, (error, response, body)=>{
             if (error)  return reject(error);
-            debug("in synccheck body : " + body);
-            if (body == 'window.synccheck={retcode:"1101",selector:"0"}') {
-                console.log("自动登出");
-                process.exit(1)
-            }
+            if (body == 'window.synccheck={retcode:"1101",selector:"0"}') return reject('自动登出');
             // TODO: 整理各种情况
             if (body !== 'window.synccheck={retcode:"0",selector:"0"}')  obj.webwxsync = true;
             resolve(obj);
@@ -147,37 +139,37 @@ function webwxsync(obj) {
         request(options, (error, response, body)=>{
             obj.SyncKey = body.SyncKey;
             if (body.AddMsgCount = 0)  return;
-            debug('组装消息。。。');
+            var msgList = utl.filterMsgList(body.AddMsgList);
+            debug('组装消息。。。' +'消息数量：'+msgList.length);
             // FIXME:
             var ps = [];
-            _.each(body.AddMsgList, function(o){//Monster
+            _.each(msgList, function(o){//Monster
                 var toUserName = o.ToUserName;
-                //debug('in webwxsync body:' + inspect(o));
+               // debug('in webwxsync body:' + inspect(o));
                 if ((o.MsgType == 1) && (toUserName == obj.username)) { //给我
-                    debug(inspect(o));
+                    debug('消息内容：'+inspect(o));
                     var fil = _.filter(obj.ml, {'UserName' : o.FromUserName});
-                    if(fil.length > 0) console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
+                    //if(fil.length > 0) console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
                     var group = _.startsWith('o.FromUserName', '@@');
                     if(!group) {
+                        console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
                         debug('获取机器人回复消息...');
                         // 有意思的东西哈哈
                         o.Content = o.Content.replace(/@老猫/g, '喂, ');
-                        // 闭包,防止串号，血泪教训
-                        //var replyPromise = replyRobot(o.Content);
-                        //replyPromise.then(body => {
-                        //    debug('组装机器人回复消息...');
-                        //    obj.MsgToUserAndSend.push({
-                        //        User: '@0493fa65a3630d7d05fc7352da1a536a',//o.FromUserName,
-                        //        Msg: botTitle + body
-                        //    });
-                        //});
-
-                        obj.MsgToUserAndSend.push({
-                            User: '@0493fa65a3630d7d05fc7352da1a536a',//o.FromUserName,
-                            Msg: '搞毛呢？'
+                        var replyPromise = replyRobot(o.Content);
+                        replyPromise.then(body => {
+                            debug('组装机器人回复消息...');
+                            obj.MsgToUserAndSend.push({
+                                User: obj.target.UserName,//o.FromUserName,
+                                Msg: body
+                            });
                         });
-                        //ps.push(replyPromise);
+                        ps.push(replyPromise);
+                    } else {
+                        console.log('[' + fil[0]['NickName'] + '群 里用户]', o.Content);
+                        //debug(inspect(o));
                     }
+
                 }
             });
             Promise.all(ps).then(()=>{

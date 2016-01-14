@@ -4,6 +4,7 @@
 var request = require('request');
 
 var url = `http://apis.baidu.com/turing/turing/turing`;
+//var url = `http://www.tuling123.com/openapi/wechatapi?key=8b690fe5d5f721c6c62a1cdb59b62992`;
 //var url = `http://www.xiaodoubi.com/simsimiapi.php?msg=1+1µÈÓÚ¼¸`;
 request.get(url,
     {
@@ -16,5 +17,7 @@ request.get(url,
         json: true
     },
      (error, response, body)=> {
+         console.log(body.code);
         console.log(body.text);
     });
+
