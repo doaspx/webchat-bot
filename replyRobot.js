@@ -15,7 +15,6 @@ function echo(content) {
 
 function turingRobot(content) {
     content = content.replace(/^[^:]+:<br\/>/m, "");
-    content = '你吃饭了么？';
     return new Promise((resolve, reject)=> {
         var url = `http://apis.baidu.com/turing/turing/turing`;
         request.get(url,
@@ -29,7 +28,7 @@ function turingRobot(content) {
                 json: true
             }, (error, response, body)=> {
                 if (error)  return reject(error);
-                if(body.code == 40004) return resolve(body.text);
+                if(body.code == 40004) return resolve(content);
                 resolve(body.text);
             });
     });

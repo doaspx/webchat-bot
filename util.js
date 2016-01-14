@@ -36,7 +36,7 @@ var util = {
         return json != null && json.username != null ? json.username : "";
     }, //
     filterMsgList: function(list){
-        return _.filter(list, function(item){ return item.MsgType == 1});
+        return _.filter(list, function(item){ return item.MsgType == 1 && item.FromUserName != 'newsapp'});
     },
     findNickName: function(list, userName){
         var fil = _.filter(list, {'UserName': userName});

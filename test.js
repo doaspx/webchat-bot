@@ -149,10 +149,9 @@ function webwxsync(obj) {
                 if ((o.MsgType == 1) && (toUserName == obj.username)) { //给我
                     debug('消息内容：'+inspect(o));
                     var fil = _.filter(obj.ml, {'UserName' : o.FromUserName});
-                    //if(fil.length > 0) console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
+                    if(fil.length > 0) console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
                     var group = _.startsWith('o.FromUserName', '@@');
                     if(!group) {
-                        console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
                         debug('获取机器人回复消息...');
                         // 有意思的东西哈哈
                         o.Content = o.Content.replace(/@老猫/g, '喂, ');
@@ -166,7 +165,6 @@ function webwxsync(obj) {
                         });
                         ps.push(replyPromise);
                     } else {
-                        console.log('[' + fil[0]['NickName'] + '群 里用户]', o.Content);
                         //debug(inspect(o));
                     }
 
