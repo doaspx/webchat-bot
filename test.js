@@ -145,8 +145,8 @@ function webwxsync(obj) {
             var ps = [];
             _.each(msgList, function(o){//Monster
                 var toUserName = o.ToUserName;
-               // debug('in webwxsync body:' + inspect(o));
-                if ((o.MsgType == 1) && (toUserName == obj.username)) { //给我
+                //debug('in webwxsync body:' + inspect(o));
+                if ((o.MsgType == 1) && (toUserName == obj.username || toUserName =='filehelper')) { //给我
                     debug('消息内容：'+inspect(o));
                     var fil = _.filter(obj.ml, {'UserName' : o.FromUserName});
                     if(fil.length > 0) console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
@@ -158,8 +158,9 @@ function webwxsync(obj) {
                         var replyPromise = replyRobot(o.Content);
                         replyPromise.then(body => {
                             debug('组装机器人回复消息...');
+                            console.log(o.FromUserName);
                             obj.MsgToUserAndSend.push({
-                                User: obj.target.UserName,//o.FromUserName,
+                                User: o.FromUserName,//obj.target.UserName,//
                                 Msg: body
                             });
                         });
