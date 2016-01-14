@@ -16,26 +16,31 @@ function echo(content) {
 function turingRobot(content) {
     content = content.replace(/^[^:]+:<br\/>/m, "");
     return new Promise((resolve, reject)=> {
-        var url = `http://apis.baidu.com/turing/turing/turing`;
-        request.get(url,
-            {
-                headers: {'apikey': 'a51d2eaaaf2601e07deea6f9bca864c9'},
-                qs: {
-                    key: '879a6cb3afb84dbf4fc84a1df2ab7319',
-                    info: content,
-                    userid: 'eb2edb736'
-                },
-                json: true
-            }, (error, response, body)=> {
-                if (error)  return reject(error);
+        var url = 'http://www.tuling123.com/openapi/api?key=8b690fe5d5f721c6c62a1cdb59b62992&info='+content;
+        request.get(encodeURI(url), (err, res, body) => {
+                if (err)  return reject(err);
                 if(body.code == 40004) return resolve(content);
-                resolve(body.text);
-            });
+                resolve(JSON.parse(body).text);
+        })
     });
 }
 
 function baiduDirect(content) {
-    // TODO:
+    //var url = `http://apis.baidu.com/turing/turing/turing`;
+    //request.get(url,
+    //    {
+    //        headers: {'apikey': 'a51d2eaaaf2601e07deea6f9bca864c9'},
+    //        qs: {
+    //            key: '879a6cb3afb84dbf4fc84a1df2ab7319',
+    //            info: content,
+    //            userid: 'eb2edb736'
+    //        },
+    //        json: true
+    //    }, (error, response, body)=> {
+    //        if (error)  return reject(error);
+    //        if(body.code == 40004) return resolve(content);
+    //        resolve(body.text);
+    //    });
 }
 
 module.exports.turingRobot = turingRobot;
