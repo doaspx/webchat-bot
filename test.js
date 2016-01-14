@@ -150,7 +150,7 @@ function webwxsync(obj) {
                     debug('消息内容：'+inspect(o));
                     var fil = _.filter(obj.ml, {'UserName' : o.FromUserName});
                     if(fil.length > 0) console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
-                    var group = _.startsWith('o.FromUserName', '@@');
+                    var group = _.startsWith(o.FromUserName, '@@');
                     if(!group) {
                         debug('获取机器人回复消息...');
                         // 有意思的东西哈哈
