@@ -62,7 +62,7 @@ function botSpeak(obj) {
                     "LocalID": `${timestamp}0${random}`,
                     "ClientMsgId": `${timestamp}0${random}`}
             };
-
+debug('botSpeak body:' + inspect(postData));
             var options = {
                 baseUrl: 'https://wx.qq.com',
                 uri: `/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=en_US&pass_ticket=${pass_ticket}`,
@@ -72,7 +72,7 @@ function botSpeak(obj) {
                 body: postData
             };
             request(options, (error, response, body)=>{
-                console.log(botTitle, msgBundle.Msg);
+                //console.log(botTitle, msgBundle.Msg);
                  debug("in botSpeak ret: " + inspect(body));
             })
         }
@@ -116,7 +116,7 @@ function synccheck(obj) {
                 process.exit(1)
             }
             // TODO: 整理各种情况
-            if (body !== 'window.synccheck={retcode:"0",selector:"0"}')  obj.webwxsync = true;  // 标识有没有新消息，要不要websync
+            if (body !== 'window.synccheck={retcode:"0",selector:"0"}')  obj.webwxsync = true;
             resolve(obj);
         })
     });
@@ -154,7 +154,7 @@ function webwxsync(obj) {
                 var toUserName = o.ToUserName;
                 //debug('in webwxsync body:' + inspect(o));
                 if ((o.MsgType == 1) && (toUserName == obj.username)) { //给我
-
+                    debug(inspect(o));
                     var fil = _.filter(obj.ml, {'UserName' : o.FromUserName});
                     if(fil.length > 0) console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
                     var group = _.startsWith('o.FromUserName', '@@');
@@ -174,7 +174,7 @@ function webwxsync(obj) {
 
                         obj.MsgToUserAndSend.push({
                             User: '@0493fa65a3630d7d05fc7352da1a536a',//o.FromUserName,
-                            Msg: body
+                            Msg: '搞毛呢？'
                         });
                         //ps.push(replyPromise);
                     }
