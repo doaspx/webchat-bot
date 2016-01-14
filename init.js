@@ -8,29 +8,7 @@ var inspect = require('util').inspect;
 var request = require('request');
 var https = require('https');
 var baseUrl = 'https://wx.qq.com';
-var getUUID = new Promise((resolve, reject)=> {
-    var param = {
-        appid: 'wx782c26e4c19acffb',
-        fun: 'new',
-        lang: 'en_US',
-        _: Date.now()
-    }
-    var uri = '/jslogin';
-    var options = {
-        uri: uri,
-        baseUrl: 'https://login.weixin.qq.com',
-        method: 'GET',
-        qs: param
-    };
-
-    var req = request(options, (error, response, body)=> {
-        if (error) {
-            //debug(error);
-            reject(error);
-        }
-        resolve(body);
-    });
-});
+var _ = require('lodash');
 
 function checkAndParseUUID(text) {
     var result = /window.QRLogin.code = (\d+); window.QRLogin.uuid = "([^"]+)";/.exec(text);
@@ -210,31 +188,20 @@ function getContact(obj) {
             jar: true
         }
         request(options, (error, response, body)=> {
-            fs.writeFile('contact.json', JSON.stringify(body));
+           // fs.writeFile('contact.json', JSON.stringify(body));
             var ml = body.MemberList;
             obj.ml = ml;
-            obj.toUser = ml.filter(m=>(m.NickName == "篇篇头条"))[0]['UserName'];
+            //var v = _.filter(ml, {'NickName':'BJ NodeJS Club'});
+            var nicklist = _.pluck(ml, 'NickName');
+            debug('获取联系人：'+ nicklist);
+            nicklist  = _.filter(ml, {'NickName': 'Monster'})
+            debug(nicklist)
             console.log('初始准备完成...');
             resolve(obj);
         });
     })
     return p;
 }
-
-
-function init(){
-   return getUUID.
-        then(checkAndParseUUID).
-        then(showQRImage).
-        then(checkScan).
-        then(checkLogin).
-        then(parseRedirectUrl).
-        then(webwxinit).
-        then(getContact).
-        catch(console.error);
-}
-
-
 
 module.exports = {
     checkAndParseUUID: checkAndParseUUID,

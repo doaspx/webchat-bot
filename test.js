@@ -6,6 +6,7 @@ var request = require('request');
 
 var https = require('https');
 var baseUrl = 'https://wx.qq.com';
+var replyRobot = require('./replyRobot').turingRobot;
 
 var getUUID = new Promise((resolve, reject)=> {
     var param = {
@@ -30,58 +31,60 @@ var getUUID = new Promise((resolve, reject)=> {
         resolve(body);
     });
 });
+var _ = require('lodash');
 
+const botTitle = '[老猫机器人]：';
 
 function handleError(e) {
     console.log(e);
 }
 
 function botSpeak(obj) {
-    //debug('obj in botSpeak:\n' + inspect(obj));
-    var BaseRequest = obj.BaseRequest;
-    var pass_ticket = obj.pass_ticket;
-    var timestamp = Date.now();
+    passWebwxsync(obj);
+    var p = new Promise((resolve, reject)=>{
+        //debug('obj in botSpeak:\n' + inspect(obj));
+        var BaseRequest = obj.BaseRequest;
+        var pass_ticket = obj.pass_ticket;
+        var timestamp = Date.now();
 
-    var random = Math.floor(Math.random() * 1000);
-    while (obj.MsgToUserAndSend.length > 0) {
-        random += 3;  // Strange hack，这个数应该是时间戳相同的消息先后编号
-        // FIXME: 先pop的应该是后收到的？不一定，可能需要在上一步检查返回消息CreateTime，但短暂时间间隔保证顺序也许是不必要的。
-        var msgBundle = obj.MsgToUserAndSend.pop();
-        var postData = {
-            BaseRequest: obj.BaseRequest,
-            Msg: {
-                "Type": 1,
-                "Content": msgBundle.Msg,
-                "FromUserName": obj.username,
-                "ToUserName": msgBundle.User,
-                "LocalID": `${timestamp}0${random}`,
-                "ClientMsgId": `${timestamp}0${random}`
-            }
-        };
-// 14519079059370342
-// 14519073058800623
-        var options = {
-            baseUrl: 'https://wx.qq.com',
-            uri: `/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=en_US&pass_ticket=${pass_ticket}`,
-            method: 'POST',
-            jar: true,
-            json: true,
-            body: postData,
+        var random = Math.floor(Math.random() * 1000);
+        while (obj.MsgToUserAndSend.length > 0) {
+            random += 3;  // Strange hack，这个数应该是时间戳相同的消息先后编号
+            // FIXME: 先pop的应该是后收到的？不一定，可能需要在上一步检查返回消息CreateTime，但短暂时间间隔保证顺序也许是不必要的。
+            var msgBundle = obj.MsgToUserAndSend.pop();
+            var postData = {
+                BaseRequest: obj.BaseRequest,
+                Msg: {
+                    "Type": 1,
+                    "Content": botTitle + msgBundle.Msg,
+                    "FromUserName": obj.username,
+                    "ToUserName": msgBundle.User,
+                    "LocalID": `${timestamp}0${random}`,
+                    "ClientMsgId": `${timestamp}0${random}`}
+            };
+
+            var options = {
+                baseUrl: 'https://wx.qq.com',
+                uri: `/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=en_US&pass_ticket=${pass_ticket}`,
+                method: 'POST',
+                jar: true,
+                json: true,
+                body: postData
+            };
+            request(options, (error, response, body)=>{
+                console.log(botTitle, msgBundle.Msg);
+                 debug("in botSpeak ret: " + inspect(body));
+            })
         }
-
-//debug("options in botSpeak: \n" + inspect(options));
-//debug("postData in botSpeak: \n" + inspect(postData));
-
-        request(options, (error, response, body)=> {
-            // debug("in botSpeak ret: " + inspect(body));
-            console.log("[机器人回复]", msgBundle.Msg);
-        })
-    }
+        resolve(obj);
+    });
+    return p;
 }
 
 function synccheck(obj) {
-    //https://webpush.weixin.qq.com/cgi-bin/mmwebwx-bin/synccheck?r=1452482036596&skey=%40crypt_3bb2969_2e63a3568c783f0d4a9afbab8ba9f0d2&sid=be%2FeK3jB4eicuZct&uin=2684027137&deviceid=e203172097127147&synckey=1_638107724%7C2_638108703%7C3_638108650%7C1000_1452474264&_=1452482035266
-    var p = new Promise((resolve, reject)=> {
+    var p = new Promise((resolve, reject)=>{
+        // 重置obj.webwxsync, 默认不需要webwxsync
+        obj.webwxsync = false;
         var timestamp = Date.now();
         var skey = obj.BaseRequest.Skey;
         var sid = obj.BaseRequest.Sid;
@@ -99,15 +102,22 @@ function synccheck(obj) {
                 uin: uin,
                 deviceid: deviceid,
                 synckey: synckey
-                //_: 一个看上去像timestamp但每次递增1的不知道啥
             },
-            jar: true
+            jar: true,
+            timeout: 60000
         }
 
-        request(options, (error, response, body)=> {
-            if (error) return reject(error);
-            //debug("in synccheck body : " + body);
-            if (body !== 'window.synccheck={retcode:"0",selector:"0"}') resolve(obj);
+        console.log('检测是否有新的消息...');
+        request(options, (error, response, body)=>{
+            if (error)  return reject(error);
+            debug("in synccheck body : " + body);
+            if (body == 'window.synccheck={retcode:"1101",selector:"0"}') {
+                console.log("自动登出");
+                process.exit(1)
+            }
+            // TODO: 整理各种情况
+            if (body !== 'window.synccheck={retcode:"0",selector:"0"}')  obj.webwxsync = true;  // 标识有没有新消息，要不要websync
+            resolve(obj);
         })
     });
 
@@ -115,11 +125,7 @@ function synccheck(obj) {
 }
 
 function webwxsync(obj) {
-    // https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsync?sid=xWam498tVKzNaHLt&skey=@crypt_3bb2969_a8ec83465d303fb83bf7ddcf512c081d&lang=en_US&pass_ticket=YIBmwsusvnbs8l7Z4wtRdBXtslA8JjyHxsy0Fsf3PN8NTiP3fzhjB9rOE%252Fzu6Nur
-    // 参数里
-    // rr这参数是什么鬼。。。
-    // -732077262 先
-    // -732579226 后
+    passWebwxsync(obj);
     var p = new Promise((resolve, reject) => {
         //debug('obj in webwxsync:\n' + inspect(obj));
         var BaseRequest = obj.BaseRequest;
@@ -138,109 +144,64 @@ function webwxsync(obj) {
             jar: true
         }
 
-        //debug("options in webwxsync: \n" + inspect(options));
-        //debug("postData in webwxsync: \n" + inspect(postData));
-
-        //
-        // synccheck检查是否需要webwxsync
-        // webwxsync检查是否有更新
-        // 继续synccheck啥的。。。我猜
-        // 当promise遇上循环
-        // 请在评论区教教我该怎么在循环中优雅地使用Promise。。。
-        request(options, (error, response, body)=> {
-            // fs.writeFile('webwxsync.json', JSON.stringify(body));
-            // 如果Ret: 0，有新消息
-            //
-            // update synckey
+        request(options, (error, response, body)=>{
             obj.SyncKey = body.SyncKey;
-            // 或者AddMsgCount 为 1
-            if (body.AddMsgCount > 0) {
-                // FIXME:
-                // 这个设计可能有问题，Promise数组
-                // 这段异步逻辑非常绕，我尝试这里说明
-                // obj.MsgToUserAndSend 来搜集这次websync得到的所有待回复的消息(打包用户名和回复内容)
-                // replyPromise代表未来某个时刻的回复
-                // ps代表这次websync得到的需要回复的消息(可能多条)对应的replyPromise的数组
-                // 只有ps钟所有reply都获得了，这时obj.MsgToUserAndSend就包含所有待回复打包消息，就可以把obj送给下一个then注册的函数处理。在robot中，websync下一个是botSpeak,就是回复函数。
-                var ps = [];
-                for (var o of body.AddMsgList) {
-                    if ((o.MsgType == 1) && (o.ToUserName == obj.username)) { //给我
-                        //debug("in webwxsync someone call me:" + inspect(o));
-                        // 查询用户名昵称
-                        for (var i = 0; i < obj.ml.length; i++) {
-                            if (obj.ml[i]['UserName'] == o.FromUserName)
-                                console.log('[' + obj.ml[i]['NickName'] + ' 说]', o.Content);
-                        }
-                        if (o.FromUserName.startsWith("@@") && !o.Content.includes("@老猫")) {
-                            // 群消息且at我的群昵称
-                            continue;
-                        }//http://www.xiaodoubi.com/simsimiapi.php?msg=
+            if (body.AddMsgCount = 0)  return;
+            debug('组装消息。。。');
+            // FIXME:
+            var ps = [];
+            _.each(body.AddMsgList, function(o){//Monster
+                var toUserName = o.ToUserName;
+                //debug('in webwxsync body:' + inspect(o));
+                if ((o.MsgType == 1) && (toUserName == obj.username)) { //给我
 
+                    var fil = _.filter(obj.ml, {'UserName' : o.FromUserName});
+                    if(fil.length > 0) console.log('[' + fil[0]['NickName'] + ' 说]', o.Content);
+                    var group = _.startsWith('o.FromUserName', '@@');
+                    if(!group) {
+                        debug('获取机器人回复消息...');
                         // 有意思的东西哈哈
-                        o.Content = o.Content.replace('@老猫', '喂, ');
+                        o.Content = o.Content.replace(/@老猫/g, '喂, ');
+                        // 闭包,防止串号，血泪教训
+                        //var replyPromise = replyRobot(o.Content);
+                        //replyPromise.then(body => {
+                        //    debug('组装机器人回复消息...');
+                        //    obj.MsgToUserAndSend.push({
+                        //        User: '@0493fa65a3630d7d05fc7352da1a536a',//o.FromUserName,
+                        //        Msg: botTitle + body
+                        //    });
+                        //});
 
-                        var username = o.FromUserName;  // 闭包,防止串号，血泪教训
-                        var replyPromise = reply(o.Content);
-                        replyPromise.then(rep=> {
-                            // debug("in ps reps promise:" + inspect(username))
-                            // debug("in ps reps promise:" + inspect(rep))
-                            obj.MsgToUserAndSend.push({
-                                User: username,
-                                Msg: "[WeChatBot]: " + rep
-                            });
+                        obj.MsgToUserAndSend.push({
+                            User: '@0493fa65a3630d7d05fc7352da1a536a',//o.FromUserName,
+                            Msg: body
                         });
-                        ps.push(replyPromise);
+                        //ps.push(replyPromise);
                     }
                 }
-                Promise.all(ps).then(()=> {
-                    resolve(obj);
-                });
-            }
+            });
+            Promise.all(ps).then(()=>{
+                resolve(obj);
+            });
         });
     });
     return p;
 }
 
 function robot(obj) {
-
-    setInterval(()=> {
-        synccheck(obj).
-            then(webwxsync).
-            then(botSpeak).
-            catch(console.error);
-    }, 4000)
+    synccheck(obj).
+        then(webwxsync).
+        then(botSpeak).
+        then(robot).
+        catch(console.log);
 }
 
-// FIXME:回复逻辑分离到其他文件
-function reply(content) {
-    // 修正群消息
-    content = content.replace(/^[^:]+:<br\/>/m, "");
-    //return Promise.resolve(content);
-    // 网络版的
-    return new Promise((resolve, reject)=> {
-        var url = `http://apis.baidu.com/turing/turing/turing`;
-        request.get(
-            url,
-            {
-                headers: {
-                    'apikey': '6053e172b7994b684aadfd4ae0841510'
-                },
-                qs: {
-                    key: '879a6cb3afb84dbf4fc84a1df2ab7319',
-                    info: content,
-                    userid: 'eb2edb736'
-                },
-                json: true
-            },
-            (error, response, body)=> {
-                if (error) {
-                    reject(error);
-                }
-                //debug("in turing machine: " + inspect(body))
-                resolve(body.text);
-            });
-    });
+function passWebwxsync(obj) {
+    if (!obj.webwxsync) {
+        return Promise.resolve(obj);
+    }
 }
+
 
 var init = require('./init');
 getUUID.
